@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coffee - AI Chat</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0e0c0a;
+      color: #f3ece7;
+      font-family: system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      border-left: 1px solid #261e18;
+      border-right: 1px solid #261e18;
+    }
+    .hidden { display: none !important; }
+    header {
+      padding: 14px 16px;
+      background-color: #171310;
+      border-bottom: 1px solid #261e18;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .brand h1 { font-size: 18px; color: #e6ccb2; letter-spacing: 0.4px; }
+    .nav-btns { display: flex; gap: 6px; }
+    .nav-btn {
+      background: #261e18;
+      color: #f3ece7;
+      border: 1px solid #362b23;
+      padding: 7px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .nav-btn:hover { background: #382c23; border-color: #d4a373; }
+    .view {
+      flex: 1;
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    h2 { font-size: 18px; color: #e6ccb2; }
+    label { font-size: 12px; color: #b5a89e; font-weight: 600; margin-bottom: -6px; }
+    input, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      background: #171310;
+      border: 1px solid #362b23;
+      color: #ffffff;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    input:focus, textarea:focus { outline: none; border-color: #d4a373; }
+    .primary-btn {
+      background: #d4a373;
+      color: #12100e;
+      font-weight: bold;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .primary-btn:hover { background: #e6ccb2; }
+    .secondary-btn {
+      background: #261e18;
+      color: #e6ccb2;
+      border: 1px solid #3e3229;
+      padding: 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* Chai Swipe Deck */
+    .deck-controls { display: flex; justify-content: space-between; align-items: center; }
+    .swipe-card {
+      flex: 1;
+      background: linear-gradient(180deg, #211b17 0%, #14110e 100%);
+      border: 1px solid #362b23;
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      min-height: 410px;
+    }
+    .card-banner {
+      height: 220px;
+      background: #261e18;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 76px;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    .card-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, #14110e 5%, transparent 65%);
+    }
+    .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .card-title-row { display: flex; justify-content: space-between; align-items: center; }
+    .card-title-row h3 { font-size: 22px; color: #f3ece7; }
+    .card-tagline { font-size: 12px; color: #d4a373; font-weight: 600; }
+    .card-desc {
+      font-size: 13px;
+      color: #b5a89e;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .deck-actions { display: flex; gap: 10px; padding-top: 6px; }
+    .deck-actions button { flex: 1; }
+
+    /* List View */
+    .char-card {
+      padding: 12px;
+      border-radius: 14px;
+      background: #171310;
+      border: 1px solid #261e18;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .char-card:hover { border-color: #d4a373; }
+    .char-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #261e18;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Chat Screen */
+    #view-chat { padding: 0; overflow: hidden; }
+    .chat-subheader {
+      padding: 10px 14px;
+      background: #171310;
+      border-bottom: 1px solid #261e18;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-tools { display: flex; gap: 10px; align-items: center; }
+    .tool-link { background: none; border: none; color: #d4a373; font-size: 12px; cursor: pointer; }
+    .reset-btn { background: none; border: none; color: #e06c75; font-size: 12px; cursor: pointer; }
+    .memory-drawer {
+      background: #1d1814;
+      padding: 12px 14px;
+      border-bottom: 1px solid #362b23;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .msg-row { display: flex; flex-direction: column; }
+    .msg-row.user { align-items: flex-end; }
+    .msg-row.ai { align-items: flex-start; }
+    .bubble {
+      max-width: 85%;
+      padding: 12px 14px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      cursor: pointer;
+    }
+    .msg-row.user .bubble {
+      background: #d4a373;
+      color: #12100e;
+      border-bottom-right-radius: 4px;
+    }
+    .msg-row.ai .bubble {
+      background: #211b17;
+      color: #f3ece7;
+      border: 1px solid #362b23;
+      border-bottom-left-radius: 4px;
+    }
+    .action-text { color: #d4a373; font-style: italic; }
+    .msg-row.user .action-text { color: #4a3520; font-style: italic; }
+    .msg-actions { display: flex; gap: 10px; margin-top: 4px; padding: 0 4px; }
+    .mini-btn { background: none; border: none; color: #9c8f85; font-size: 11px; cursor: pointer; }
+    .mini-btn:hover { color: #d4a373; }
+    .chat-input-bar {
+      padding: 12px;
+      background: #171310;
+      border-top: 1px solid #261e18;
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input-bar input { border-radius: 20px; padding: 10px 16px; }
+    .chat-input-bar button { border-radius: 20px; padding: 0 18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span style="font-size: 20px;">☕</span>
+      <h1>Coffee</h1>
+    </div>
+    <div class="nav-btns">
+      <button type="button" class="nav-btn" id="btn-nav-bots">Discover</button>
+      <button type="button" class="nav-btn" id="btn-nav-create">+ Create</button>
+      <button type="button" class="nav-btn" id="btn-nav-settings">Profile &amp; Key</button>
+    </div>
+  </header>
+
+  <!-- SETTINGS & USER PERSONA -->
+  <div id="view-settings" class="view hidden">
+    <h2>Profile &amp; API Key</h2>
+    <label>Google AI Studio Key (AQ...)</label>
+    <input id="api-key-input" type="password" placeholder="AQ..." />
+    <label>Your Name</label>
+    <input id="user-name-input" type="text" placeholder="e.g., Aria" />
+    <label>Your Persona (Appearance, Role &amp; Vibe)</label>
+    <textarea id="user-persona-input" rows="4" placeholder="e.g., 24, wearing a dark oversized jacket, quiet observer with sharp wit..."></textarea>
+    <button type="button" class="primary-btn" id="btn-save-settings">Save Profile &amp; Continue</button>
+  </div>
+
+  <!-- DISCOVER (SWIPE DECK + LIST) -->
+  <div id="view-discover" class="view">
+    <div class="deck-controls">
+      <h2 id="discover-title">Discover Bots</h2>
+      <button type="button" class="nav-btn" id="btn-toggle-mode">List View</button>
+    </div>
+    <div id="swipe-deck-container" style="flex:1; display:flex; flex-direction:column;"></div>
+    <div id="character-list" class="hidden" style="display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+
+  <!-- CREATE / EDIT CHARACTER -->
+  <div id="view-create" class="view hidden">
+    <h2 id="form-title">Create a Character</h2>
+    <input type="hidden" id="edit-char-id" />
+    <label>Name</label>
+    <input id="char-name" type="text" placeholder="e.g., Kael" />
+    <label>Short Tagline</label>
+    <input id="char-tagline" type="text" placeholder="e.g., Late-night underground broker" />
+    <label>Emoji Avatar OR Upload Photo</label>
+    <div style="display:flex; gap:8px;">
+      <input id="char-avatar" type="text" placeholder="Emoji (e.g., 🗡️)" style="width:45%;" />
+      <input id="char-photo-file" type="file" accept="image/*" style="width:55%; padding:8px; font-size:12px;" />
+    </div>
+    <label>Personality, Appearance &amp; World (W++ Style)</label>
+    <textarea id="char-desc" rows="5" placeholder="[Appearance: ...] [Personality: ...] [World: ...]"></textarea>
+    <label>Example Dialogue (Sets their exact voice)</label>
+    <textarea id="char-examples" rows="4" placeholder="User: *leans on the counter*&#10;Char: *smirks slowly* Looking for trouble?"></textarea>
+    <label>First Message (Greeting)</label>
+    <textarea id="char-greeting" rows="3" placeholder="*looks up as you walk in* You're late."></textarea>
+    <button type="button" class="primary-btn" id="btn-create-char">Save Character</button>
+  </div>
+
+  <!-- ACTIVE CHAT -->
+  <div id="view-chat" class="view hidden">
+    <div class="chat-subheader">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div id="chat-header-avatar" class="char-avatar" style="width:32px; height:32px; font-size:16px;"></div>
+        <strong id="chat-header-name" style="color:#e6ccb2; font-size:15px;"></strong>
+      </div>
+      <div class="chat-tools">
+        <button type="button" class="tool-link" id="btn-toggle-memory">📌 Memory</button>
+  <script>
+    window.addEventListener("DOMContentLoaded", function() {
+      var defaultChars = [
+        {
+          id: "barista-1",
+          name: "Elena",
+          tagline: "Witty late-night barista at a quiet indie cafe",
+          avatar: "🥐",
+          photo: "",
+          desc: "[Appearance: Warm amber eyes, messy dark bun held by a wooden pencil, vintage apron dusted with cinnamon and espresso grounds]\n[Personality: Observant, dryly humorous, empathetic, fiercely protective of her regulars]\n[World: A cozy, rain-streaked corner coffee shop open past midnight with lo-fi vinyl playing softly]",
+          examples: "User: *sits at the corner booth looking exhausted*\nElena: *sets a steaming ceramic mug down without asking and leans against the table* You look like you just survived a three-hour boss fight. On the house tonight—tell me what happened.",
+          greeting: "*wipes down the espresso machine and looks up as the brass bell above the door chimes, offering a warm, knowing smile* You're out past midnight again. Usual order, or do we need something stronger tonight?"
+        }
+      ];
+
+      var characters = defaultChars;
+      try {
+        var saved = JSON.parse(localStorage.getItem("coffee_chars"));
+        if (Array.isArray(saved) && saved.length > 0) { characters = saved; }
+      } catch (e) {}
+
+      var chats = {};
+      try { chats = JSON.parse(localStorage.getItem("coffee_chats")) || {}; } catch (e) {}
+      var memories = {};
+      try { memories = JSON.parse(localStorage.getItem("coffee_memories")) || {}; } catch (e) {}
+
+      var currentChar = null;
+      var deckIndex = 0;
+      var isListView = false;
+      var uploadedPhotoBase64 = "";
+
+      function toggleView(viewName) {
+        var views = ["settings", "discover", "create", "chat"];
+        for (var i = 0; i < views.length; i++) {
+          document.getElementById("view-" + views[i]).classList.add("hidden");
+        }
+        document.getElementById("view-" + viewName).classList.remove("hidden");
+      }
+
+      function applyAvatarStyle(el, char) {
+        if (char.photo) {
+          el.style.backgroundImage = "url(" + char.photo + ")";
+          el.textContent = "";
+        } else {
+          el.style.backgroundImage = "none";
+          el.textContent = char.avatar || "☕";
+        }
+      }
+
+      function renderDiscover() {
+        var deck = document.getElementById("swipe-deck-container");
+        var list = document.getElementById("character-list");
+        if (isListView) {
+          deck.classList.add("hidden");
+          list.classList.remove("hidden");
+          renderCharacterList();
+        } else {
+          list.classList.add("hidden");
+          deck.classList.remove("hidden");
+          renderSwipeDeck();
+        }
+      }
+
+      function renderSwipeDeck() {
+        var deck = document.getElementById("swipe-deck-container");
+        deck.innerHTML = "";
+        if (characters.length === 0) return;
+        if (deckIndex >= characters.length) deckIndex = 0;
+        if (deckIndex < 0) deckIndex = characters.length - 1;
+        var char = characters[deckIndex];
+
+        var card = document.createElement("div");
+        card.className = "swipe-card";
+
+        var banner = document.createElement("div");
+        banner.className = "card-banner";
+        applyAvatarStyle(banner, char);
+        var grad = document.createElement("div");
+        grad.className = "card-gradient";
+        banner.appendChild(grad);
+
+        var body = document.createElement("div");
+        body.className = "card-body";
+        body.innerHTML = '<div class="card-title-row"><h3>' + char.name + '</h3><span style="font-size:12px;color:#9c8f85;">' + (deckIndex + 1) + '/' + characters.length + '</span></div>' +
+          '<div class="card-tagline">' + (char.tagline || "Custom AI Character") + '</div>' +
+          '<div class="card-desc">' + char.desc + '</div>';
+
+        var actions = document.createElement("div");
+        actions.className = "deck-actions";
+
+        var prevBtn = document.createElement("button");
+        prevBtn.type = "button";
+        prevBtn.className = "secondary-btn";
+        prevBtn.textContent = "← Prev";
+        prevBtn.addEventListener("click", function() { deckIndex--; renderSwipeDeck(); });
+
+        var chatBtn = document.createElement("button");
+        chatBtn.type = "button";
+        chatBtn.className = "primary-btn";
+        chatBtn.textContent = "💬 Chat Now";
+        chatBtn.addEventListener("click", function() { openChat(char.id); });
+
+        var nextBtn = document.createElement("button");
+        nextBtn.type = "button";
+        nextBtn.className = "secondary-btn";
+        nextBtn.textContent = "Next →";
+        nextBtn.addEventListener("click", function() { deckIndex++; renderSwipeDeck(); });
+
+        actions.appendChild(prevBtn);
+        actions.appendChild(chatBtn);
+        actions.appendChild(nextBtn);
+        body.appendChild(actions);
+        card.appendChild(banner);
+        card.appendChild(body);
+        deck.appendChild(card);
+      }
+      function renderCharacterList() {
+        var list = document.getElementById("character-list");
+        list.innerHTML = "";
+        for (var i = 0; i < characters.length; i++) {
+          (function(char) {
+            var card = document.createElement("div");
+            card.className = "char-card";
+            card.addEventListener("click", function() { openChat(char.id); });
+
+            var avatarDiv = document.createElement("div");
+            avatarDiv.className = "char-avatar";
+            applyAvatarStyle(avatarDiv, char);
+
+            var infoDiv = document.createElement("div");
+            infoDiv.style.overflow = "hidden";
+            infoDiv.innerHTML = '<h3 style="font-size:16px;color:#e6ccb2;">' + char.name + '</h3><p style="font-size:12px;color:#a39890;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (char.tagline || char.desc) + '</p>';
+
+            card.appendChild(avatarDiv);
+            card.appendChild(infoDiv);
+            list.appendChild(card);
+          })(characters[i]);
+        }
+      }
+
+      function openChat(charId) {
+        for (var i = 0; i < characters.length; i++) {
+          if (characters[i].id === charId) { currentChar = characters[i]; break; }
+        }
+        if (!currentChar) return;
+        applyAvatarStyle(document.getElementById("chat-header-avatar"), currentChar);
+        document.getElementById("chat-header-name").textContent = currentChar.name;
+        document.getElementById("chat-memory-input").value = memories[charId] || "";
+        document.getElementById("memory-drawer").classList.add("hidden");
+
+        if (!chats[charId] || chats[charId].length === 0) {
+          chats[charId] = [{ role: "assistant", content: currentChar.greeting }];
+          localStorage.setItem("coffee_chats", JSON.stringify(chats));
+        }
+        renderMessages();
+        toggleView("chat");
+      }
+
+      function formatRoleplayText(text) {
+        var safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return safe.replace(/\*(.*?)\*/g, '<span class="action-text">*$1*</span>');
+      }
+
+      function renderMessages() {
+        var container = document.getElementById("chat-messages");
+        container.innerHTML = "";
+        var history = chats[currentChar.id] || [];
+        for (var i = 0; i < history.length; i++) {
+          (function(idx, msg) {
+            var isUser = msg.role === "user";
+            var row = document.createElement("div");
+            row.className = "msg-row " + (isUser ? "user" : "ai");
+
+            var bubble = document.createElement("div");
+            bubble.className = "bubble";
+            bubble.innerHTML = formatRoleplayText(msg.content);
+            row.appendChild(bubble);
+
+            var actions = document.createElement("div");
+            actions.className = "msg-actions";
+
+            var editBtn = document.createElement("button");
+            editBtn.type = "button";
+            editBtn.className = "mini-btn";
+            editBtn.textContent = "✏️ Edit";
+            editBtn.addEventListener("click", function() {
+              var updated = prompt("Edit message:", msg.content);
+              if (updated !== null && updated.trim() !== "") {
+                chats[currentChar.id][idx].content = updated.trim();
+                localStorage.setItem("coffee_chats", JSON.stringify(chats));
+                renderMessages();
+              }
+            });
+            actions.appendChild(editBtn);
+
+            if (!isUser && idx === history.length - 1 && idx > 0) {
+              var regenBtn = document.createElement("button");
+              regenBtn.type = "button";
+              regenBtn.className = "mini-btn";
+              regenBtn.textContent = "↻ Regenerate";
+              regenBtn.addEventListener("click", function() {
+                chats[currentChar.id].pop();
+                localStorage.setItem("coffee_chats", JSON.stringify(chats));
+                renderMessages();
+                fetchAIResponse();
+              });
+              actions.appendChild(regenBtn);
+            }
+
+            row.appendChild(actions);
+            container.appendChild(row);
+          })(i, history[i]);
+        }
+        container.scrollTop = container.scrollHeight;
+      }
+
+      function sendMessage() {
+        var input = document.getElementById("message-input");
+        var text = input.value.trim();
+        if (!text || !currentChar) return;
+        input.value = "";
+        chats[currentChar.id].push({ role: "user", content: text });
+        localStorage.setItem("coffee_chats", JSON.stringify(chats));
+        renderMessages();
+        fetchAIResponse();
+      }
+      function fetchAIResponse() {
+        var apiKey = (localStorage.getItem("coffee_api_key") || "").trim();
+        var userName = localStorage.getItem("coffee_user_name") || "User";
+        var userPersona = localStorage.getItem("coffee_user_persona") || "";
+        var chatMemory = memories[currentChar.id] || "";
+        if (!apiKey) { alert("Please add your API key in Profile & Key."); toggleView("settings"); return; }
+
+        var systemPrompt = "You are " + currentChar.name + " in an immersive, richly detailed, one-on-one roleplay chat with " + userName + ".\n\n[Character Persona & World]\n" + currentChar.desc;
+        if (userPersona) { systemPrompt += "\n\n[About " + userName + "]\n" + userPersona; }
+        if (chatMemory) { systemPrompt += "\n\n[Pinned Scene & Story Memory]\n" + chatMemory; }
+        if (currentChar.examples) { systemPrompt += "\n\n[Example Dialogue Style]\n" + currentChar.examples; }
+        systemPrompt += "\n\n[Classic Roleplay Rules]\n- Stay 100% in character at all times. Never break the fourth wall or sound like an AI assistant.\n- Write vivid, immersive responses of 3 to 4 medium paragraphs balancing sensory details, body language, inner emotion, and natural spoken dialogue.\n- Enclose all physical actions, facial expressions, and internal thoughts in single asterisks (e.g., *leans forward with a slow smirk*).\n- Write spoken dialogue in plain text without quotation marks.\n- End with a compelling hook, question, or action that naturally invites " + userName + " to respond.";
+
+        var contents = [];
+        var history = chats[currentChar.id];
+        for (var i = 0; i < history.length; i++) {
+          contents.push({
+            role: history[i].role === "assistant" ? "model" : "user",
+            parts: [{ text: history[i].content }]
+          });
+        }
+
+        chats[currentChar.id].push({ role: "assistant", content: "..." });
+        var msgIndex = chats[currentChar.id].length - 1;
+        renderMessages();
+
+        var models = ["gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3.8-flash"];
+
+        function streamFromModel(index) {
+          if (index >= models.length) {
+            chats[currentChar.id][msgIndex].content = "*pauses for a moment* (All free servers are busy—tap Regenerate in a few seconds!)";
+            localStorage.setItem("coffee_chats", JSON.stringify(chats));
+            renderMessages();
+            return;
+          }
+
+ var endpoint = ["https:/", "generativelanguage.googleapis.com", "v1beta", "models", models[index] + ":streamGenerateContent?alt=sse"].join("/");
+
+          fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: systemPrompt }] },
+              contents: contents,
+              generationConfig: { temperature: 0.95, topP: 0.95, maxOutputTokens: 800 }
+            })
+          })
+          .then(function(res) {
+            if (!res.ok) {
+              return res.json().then(function(errData) {
+                throw new Error((errData.error && errData.error.message) || "HTTP " + res.status);
+              });
+            }
+            var reader = res.body.getReader();
+            var decoder = new TextDecoder("utf-8");
+            var fullText = "";
+            var buffer = "";
+
+            function readChunk() {
+              return reader.read().then(function(result) {
+                if (result.done) {
+                  if (!fullText.trim()) { streamFromModel(index + 1); return; }
+                  chats[currentChar.id][msgIndex].content = fullText.trim();
+                  localStorage.setItem("coffee_chats", JSON.stringify(chats));
+                  renderMessages();
+                  return;
+                }
+                buffer += decoder.decode(result.value, { stream: true });
+                var lines = buffer.split("\n");
+                buffer = lines.pop();
+                for (var i = 0; i < lines.length; i++) {
+                  var line = lines[i].trim();
+                  if (line.indexOf("data: ") === 0) {
+                    var jsonStr = line.slice(6).trim();
+                    if (jsonStr && jsonStr !== "[DONE]") {
+                      try {
+                        var parsed = JSON.parse(jsonStr);
+                        var cand = parsed.candidates && parsed.candidates.at(0);
+                        var part = cand && cand.content && cand.content.parts && cand.content.parts.at(0);
+                        if (part && part.text) {
+                          fullText += part.text;
+                          chats[currentChar.id][msgIndex].content = fullText;
+                          renderMessages();
+                        }
+                      } catch (e) {}
+                    }
+                  }
+                }
+                return readChunk();
+              });
+            }
+            return readChunk();
+          })
+          .catch(function(err) {
+            var msg = (err.message || "").toLowerCase();
+            if (msg.indexOf("high demand") !== -1 || msg.indexOf("overloaded") !== -1 || msg.indexOf("not found") !== -1 || msg.indexOf("429") !== -1 || msg.indexOf("503") !== -1) {
+              streamFromModel(index + 1);
+              return;
+            }
+            chats[currentChar.id][msgIndex].content = "Error: " + err.message;
+            renderMessages();
+          });
+        }
+
+        streamFromModel(0);
+      }
+
+      document.getElementById("char-photo-file").addEventListener("change", function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+          var img = new Image();
+          img.onload = function() {
+            var canvas = document.createElement("canvas");
+            var scale = Math.min(1, 300 / img.width);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+            uploadedPhotoBase64 = canvas.toDataURL("image/jpeg", 0.75);
+          };
+          img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById("btn-nav-bots").addEventListener("click", function() { renderDiscover(); toggleView("discover"); });
+      document.getElementById("btn-toggle-mode").addEventListener("click", function() {
+        isListView = !isListView;
+        this.textContent = isListView ? "Card Deck" : "List View";
+        renderDiscover();
+      });
+
+      document.getElementById("btn-nav-create").addEventListener("click", function() {
+        document.getElementById("form-title").textContent = "Create a Character";
+        document.getElementById("edit-char-id").value = "";
+        document.getElementById("char-name").value = "";
+        document.getElementById("char-tagline").value = "";
+        document.getElementById("char-avatar").value = "";
+        document.getElementById("char-desc").value = "";
+        document.getElementById("char-examples").value = "";
+        document.getElementById("char-greeting").value = "";
+        uploadedPhotoBase64 = "";
+        toggleView("create");
+      });
+
+      document.getElementById("btn-edit-current-bot").addEventListener("click", function() {
+        if (!currentChar) return;
+        document.getElementById("form-title").textContent = "Edit " + currentChar.name;
+        document.getElementById("edit-char-id").value = currentChar.id;
+        document.getElementById("char-name").value = currentChar.name;
+        document.getElementById("char-tagline").value = currentChar.tagline || "";
+        document.getElementById("char-avatar").value = currentChar.avatar || "";
+        document.getElementById("char-desc").value = currentChar.desc;
+        document.getElementById("char-examples").value = currentChar.examples || "";
+        document.getElementById("char-greeting").value = currentChar.greeting;
+        uploadedPhotoBase64 = currentChar.photo || "";
+        toggleView("create");
+      });
+
+      document.getElementById("btn-nav-settings").addEventListener("click", function() { toggleView("settings"); });
+      document.getElementById("btn-save-settings").addEventListener("click", function() {
+        var key = document.getElementById("api-key-input").value.trim();
+        var userName = document.getElementById("user-name-input").value.trim() || "User";
+        var persona = document.getElementById("user-persona-input").value.trim();
+        if (!key) { alert("Please paste your API key first."); return; }
+        localStorage.setItem("coffee_api_key", key);
+        localStorage.setItem("coffee_user_name", userName);
+        localStorage.setItem("coffee_user_persona", persona);
+        renderDiscover();
+        toggleView("discover");
+      });
+
+      document.getElementById("btn-create-char").addEventListener("click", function() {
+        var editId = document.getElementById("edit-char-id").value;
+        var name = document.getElementById("char-name").value.trim();
+        var tagline = document.getElementById("char-tagline").value.trim();
+        var avatar = document.getElementById("char-avatar").value.trim() || "☕";
+        var desc = document.getElementById("char-desc").value.trim();
+        var examples = document.getElementById("char-examples").value.trim();
+        var greeting = document.getElementById("char-greeting").value.trim();
+        if (!name || !desc || !greeting) { alert("Please fill out Name, Personality, and First Message."); return; }
+
+        if (editId) {
+          for (var i = 0; i < characters.length; i++) {
+            if (characters[i].id === editId) {
+              characters[i] = { id: editId, name: name, tagline: tagline, avatar: avatar, photo: uploadedPhotoBase64, desc: desc, examples: examples, greeting: greeting };
+          deckIndex = characters.length - 1;
+        }
+        localStorage.setItem("coffee_chars", JSON.stringify(characters));
+        renderDiscover();
+        toggleView("discover");
+      });
+
+      document.getElementById("btn-toggle-memory").addEventListener("click", function() {
+        document.getElementById("memory-drawer").classList.toggle("hidden");
+      });
+      document.getElementById("btn-save-memory").addEventListener("click", function() {
+        if (!currentChar) return;
+        memories[currentChar.id] = document.getElementById("chat-memory-input").value.trim();
+        localStorage.setItem("coffee_memories", JSON.stringify(memories));
+        document.getElementById("memory-drawer").classList.add("hidden");
+      });
+
+      document.getElementById("btn-reset-chat").addEventListener("click", function() {
+        if (!currentChar || !confirm("Restart this conversation?")) return;
+        chats[currentChar.id] = [{ role: "assistant", content: currentChar.greeting }];
+        localStorage.setItem("coffee_chats", JSON.stringify(chats));
+        renderMessages();
+      });
+      document.getElementById("btn-send-msg").addEventListener("click", sendMessage);
+      document.getElementById("message-input").addEventListener("keydown", function(e) { if (e.key === "Enter") sendMessage(); });
+
+      var savedKey = localStorage.getItem("coffee_api_key");
+      document.getElementById("api-key-input").value = savedKey || "";
+      document.getElementById("user-name-input").value = localStorage.getItem("coffee_user_name") || "";
+      document.getElementById("user-persona-input").value = localStorage.getItem("coffee_user_persona") || "";
+      renderDiscover();
+      if (!savedKey) { toggleView("settings"); } else { toggleView("discover"); }
+    });
+  </script>
+</body>
+</html>
+
